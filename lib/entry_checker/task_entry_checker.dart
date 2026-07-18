@@ -1,70 +1,62 @@
 import 'dart:io';
-
 import '../exceptions/task_exception.dart';
 
-// Class de verification des saisies de l'utilisateur
 abstract class CheckEntries {
   String checkBackupFileName();
   String checkTaskTitle();
   String checkTaskPriority();
   String checkTaskDeadline();
-
 }
 
-// Interface implementé avec classe générique
-class CheckConsoleEntries<T> implements CheckEntries{
+class CheckConsoleEntries implements CheckEntries {
+  final List<String> _validPriorities = ["high", "medium", "low"];
 
-  T? content;
-
-  List<String> get defaulPriority => ["high", "medium", "low"];
+  String _inputWithValidation(String prompt, bool Function(String) validator, String errorMessage) {
+    while (true) {
+      stdout.write(prompt);
+      String? input = stdin.readLineSync()?.trim().toLowerCase();
+      if (input != null && validator(input)) {
+        return input;
+      }
+      print("Erreur : $errorMessage");
+    }
+  }
 
   @override
   String checkBackupFileName() {
-    stdout.write("Nom du fichier de sauvegarde : ");
-    String content = stdin.readLineSync().toString().toLowerCase();
-    while(content.isEmpty) {
-      catchInvalidEntriesException();
-      stdout.write("Nom du fichier de sauvegarde : ");
-      content = stdin.readLineSync().toString().toLowerCase();
-    }
-    return ("$content.json");
+    return _inputWithValidation(
+      "Nom du fichier de sauvegarde : ",
+      (s) => s.isNotEmpty,
+      "Le nom du fichier ne peut pas être vide.",
+    ) + ".json";
   }
 
   @override
   String checkTaskTitle() {
-    stdout.write("Titre de la tache : ");
-    String content = stdin.readLineSync().toString().toLowerCase();
-    while(content.isEmpty) {
-      catchInvalidEntriesException();
-      stdout.write("Titre de la tache : ");
-      content = stdin.readLineSync().toString().toLowerCase();
-    }
-    return content;
+    return _inputWithValidation(
+      "Titre de la tâche : ",
+      (s) => s.isNotEmpty,
+      "Le titre ne peut pas être vide.",
+    );
   }
 
   @override
   String checkTaskPriority() {
-    stdout.write("Priorité de la tache (High, Medium, Low) : ");
-    String content = stdin.readLineSync().toString().toLowerCase();
-
-    while(content.isEmpty || !defaulPriority.contains(content)) {
-      catchInvalidEntriesException();
-      stdout.write("Priorité de la tache (High, Medium, Low) : ");
-      content = stdin.readLineSync().toString().toLowerCase();
-    }
-    return content;
+    return _inputWithValidation(
+      "Priorité (high, medium, low) : ",
+      (s) => _validPriorities.contains(s),
+      "Priorité invalide. Choisissez parmi : ${_validPriorities.join(', ')}.",
+    );
   }
 
   @override
   String checkTaskDeadline() {
-    stdout.write("Date limite de la tache (JJ/MM/AAAA) : ");
-    String content = stdin.readLineSync().toString().toLowerCase();
-    while(content.isEmpty) {
-      catchInvalidEntriesException();
-      stdout.write("Date limite de la tache (JJ/MM/AAA) : ");
-      content = stdin.readLineSync().toString().toLowerCase();
-    }
-    return content;
+    final dateRegExp = RegExp(r"^\d{2}/\d{2}/\d{4}$");
+    return _inputWithValidation(
+      "Date limite (JJ/MM/AAAA) : ",
+      (s) => dateRegExp.hasMatch(s),
+      "Format de date invalide (attendu: JJ/MM/AAAA).",
+    );
   }
 }
 

@@ -1,82 +1,85 @@
 import 'dart:io';
 
 import 'package:task_manager_updated/models/urgent_task.dart';
-import 'package:task_manager_updated/models/simple_task.dart';
 import 'package:task_manager_updated/services/task_services.dart';
 import 'package:task_manager_updated/entry_checker/task_entry_checker.dart';
+import 'package:task_manager_updated/repository/repository.dart';
 
-// Affichage par defaut
 void defaultDisplay() {
-  print("\n=== Gestionnaire de tâche ===");
+  print("\n=== Gestionnaire de tâches ===");
   print("1. Ajouter une tâche");
   print("2. Afficher toutes les tâches");
   print("3. Marquer une tâche comme terminée");
   print("4. Retirer une tâche");
   print("5. Quitter");
+  stdout.write("Choix : ");
 }
 
-// Execution principale
 void main() {
-  final service = TaskService();
-  CheckEntries userEntry = CheckConsoleEntries<String>();
-  String backupFileName = "data/${userEntry.checkBackupFileName()}";
+  CheckEntries userEntry = CheckConsoleEntries();
+  String fileName = userEntry.checkBackupFileName();
+  String backupPath = "data/$fileName";
 
-  // Verifier si le fichier de sauvegarde existe
-  if (File(backupFileName).existsSync()) {
-    service.loadTasks(backupFileName);
-  } else {
-    print("Fichier inexistant. Créez le");
-    backupFileName = "data/${userEntry.checkBackupFileName()}";
-    final jsonbackupFile = File(backupFileName); jsonbackupFile.createSync();
-    jsonbackupFile.writeAsStringSync("[]");
-    service.loadTasks(backupFileName);
+  final repository = JsonTaskRepository(backupPath);
+  final service = TaskService(repository);
+
+  // Charger les tâches existantes
+  try {
+    service.loadTasks();
+    print("Données chargées depuis $backupPath");
+  } catch (e) {
+    print("Erreur lors du chargement : $e");
   }
 
-
-  // Boucle du Gestionnaire de Tâche
   while (true) {
-
     defaultDisplay();
-
     final choice = stdin.readLineSync();
+    
     switch (choice) {
       case "1":
-        print("1. Ajouter une tâche");
         final title = userEntry.checkTaskTitle();
         final priority = userEntry.checkTaskPriority();
-        stdout.write("Voulez-vos ajouter une date limite ? (Y / N) ");
-        String dealineChoice = stdin.readLineSync().toString();
-
-        if (dealineChoice == "Y") {
-          final deadline = userEntry.checkTaskDeadline();
-          final task = priority == "high"
-              ? UrgentTask(title, deadline: deadline)
-              : SimpleTask(title, priority, deadline: deadline);
-          service.addTask(task, backupFileName);
-          break;
+        
+        stdout.write("Ajouter une date limite ? (y/n) : ");
+        final hasDeadline = stdin.readLineSync()?.toLowerCase() == 'y';
+        String? deadline;
+        if (hasDeadline) {
+          deadline = userEntry.checkTaskDeadline();
         }
-        final task = priority == "high"
-            ? UrgentTask(title)
-            : SimpleTask(title, priority);
-        service.addTask(task, backupFileName);
+
+        // Utilisation exclusive de UrgentTask (seule classe concrète)
+        final task = UrgentTask(title, priority: priority, deadline: deadline);
+        
+        service.addTask(task);
+        print("Tâche ajoutée avec succès.");
         break;
+
       case "2":
-        print("2. Afficher toutes les tâches");
-        service.listTasks();
+        stdout.write("Trier par (1: priorité, 2: date) [par défaut: priorité] : ");
+        final sortChoice = stdin.readLineSync();
+        final sortBy = (sortChoice == "2") ? "date" : "priority";
+        service.listTasks(sortBy: sortBy);
         break;
+// ... reste du code identique
+
       case "3":
-        print("3. Marquer la tâche comme terminée");
         final title = userEntry.checkTaskTitle();
-        service.markCompleted(title, backupFileName);
+        service.markCompleted(title);
         break;
+
       case "4":
-        print("4. Retirer une tâche");
         final title = userEntry.checkTaskTitle();
-        service.removeTask(title, backupFileName);
+        if (service.removeTask(title)) {
+          print("Tâche retirée.");
+        }
         break;
+
       case "5":
-        print("5. Quitter");
+        print("Au revoir !");
         exit(0);
+
+      default:
+        print("Choix invalide.");
     }
   }
 }

@@ -1,78 +1,72 @@
-import 'dart:io';
-import 'dart:convert';
-
 import '../models/task.dart';
 import '../exceptions/task_exception.dart';
-
-
+import '../repository/repository.dart';
 
 class TaskService {
+  final IRepository<Task> _repository;
 
-  List<Task> tasks = [];
+  TaskService(this._repository);
 
-  void loadTasks(String localLileName) {
+  List<Task> get tasks => _repository.getAll();
 
-    final file = File(localLileName);
-    String contents = file.readAsStringSync();
-
-    if (!file.existsSync()) {
-      tasks = [];
-      return;
-    }
-
-    final jsonList = jsonDecode(contents) as List;
-    tasks = jsonList.map((json) => Task.fromJson(json)).toList();
+  void loadTasks() {
+    _repository.load();
   }
 
-  void saveTasks(String localLileName) {
-    final file = File(localLileName);
-
-    // Transformer la liste de Task en liste de Map
-    List<Map<String, dynamic>> jsonList = tasks.map((task) => task.toJson()).toList();
-
-    // Encoder en JSON et écrire dans le fichier avec indentation
-    final jsonIdent = JsonEncoder.withIndent("    " );
-    final jsonString = jsonIdent.convert(jsonList);
-    file.writeAsStringSync(jsonString);
+  void saveTasks() {
+    _repository.save();
   }
 
-  void addTask(Task task, String localLileName) {
-    tasks.add(task);
-    saveTasks(localLileName);
+  void addTask(Task task) {
+    _repository.add(task);
+    saveTasks();
   }
 
-  bool removeTask(String title, String localLileName) {
+  bool removeTask(String title) {
     try {
-      final task = tasks.firstWhere((t) => t.title == title,
-          orElse: () => throw TaskNotFoundException("Tâche $title non trouvée"));
-      tasks.remove(task);
-      saveTasks(localLileName);
+      final task = tasks.firstWhere(
+        (t) => t.title == title,
+        orElse: () => throw TaskNotFoundException("Tâche '$title' non trouvée"),
+      );
+      _repository.remove(task);
+      saveTasks();
       return true;
-    } on TaskNotFoundException catch (exception) {
-      print(exception);
+    } on TaskNotFoundException catch (e) {
+      print(e);
       return false;
     }
   }
 
-  void markCompleted(String title, String localLileName) {
+  void markCompleted(String title) {
     try {
-      final task = tasks.firstWhere((t) => t.title == title,
-          orElse: () => throw TaskNotFoundException("Tâche $title non trouvée"));
+      final task = tasks.firstWhere(
+        (t) => t.title == title,
+        orElse: () => throw TaskNotFoundException("Tâche '$title' non trouvée"),
+      );
       task.markCompleted();
-      saveTasks(localLileName);
-    } on TaskNotFoundException catch (exception) {
-      print(exception);
+      saveTasks();
+    } on TaskNotFoundException catch (e) {
+      print(e);
     }
   }
 
   void listTasks({String sortBy = "priority"}) {
-    List<Task> sorted = [...tasks];
+    List<Task> sorted = List.from(tasks);
     if (sortBy == "priority") {
-      sorted.sort((a, b) => a.priority.compareTo(b.priority));
+      // Custom order: high -> medium -> low
+      const priorityOrder = {"high": 0, "medium": 1, "low": 2};
+      sorted.sort((a, b) => (priorityOrder[a.priority] ?? 3)
+          .compareTo(priorityOrder[b.priority] ?? 3));
     } else if (sortBy == "date") {
-      sorted.sort((a, b) =>
-          (a.deadline ?? "").compareTo(b.deadline ?? ""));
+      sorted.sort((a, b) => (a.deadline ?? "").compareTo(b.deadline ?? ""));
     }
-    sorted.forEach(print);
+    
+    if (sorted.isEmpty) {
+      print("Aucune tâche à afficher.");
+    } else {
+      for (var task in sorted) {
+        print(task);
+      }
+    }
   }
 }
