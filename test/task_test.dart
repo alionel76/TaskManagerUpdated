@@ -5,7 +5,7 @@ import 'package:task_manager_updated/services/task_services.dart';
 
 
 void main() {
-  String testFileName = "testfile.json";
+  String testFileName = "test/testfile.json";
 
 
   test("Add task", () {

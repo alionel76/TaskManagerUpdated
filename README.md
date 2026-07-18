@@ -10,7 +10,7 @@ Ce projet permet de créer, gérer, sauvegarder et tester des tâches avec persi
 - Gestion des exceptions personnalisées
 - Sauvegarde et lecture des données en JSON
 - Organisation du code en classes et fonctions modulaires
-- Tests unitaires avec `task_manager_test.dart`
+- Tests unitaires avec `task_test.dart`
 
 ---
 
@@ -23,18 +23,11 @@ TaskManager/ \
 │   └── tasks.json               # Fichier de persistance des tâches \
 │   \
 ├── lib/ \
-│   └── entry_checker         
-│       ├── task_entry_checker.dart          # Verification des saisies de l'utilisateur \
-│   └── exceptions         
-│       ├── class_task.dart          # Gestion des exceptions \
-│   └── models.dart         
-│       ├── task.dart          # Définition de la classe Principale ==> Task \
-│       ├── simple_task.dart          # Définition de la classe pour tâche simple ==> SimpleTask \
-│       ├── urgent_task.dart          # Définition de la classe pour tâche urgent ==> UrgentTask \
-│   └── repository.dart         
-│       ├── repository.dart          # Définition de la repository \
-│   └── services         # Tests unitaires \
-│       ├── task_services.dart          # Définition des differents actions à faire \
+│   └── entry_checker/         # Verification des saisies de l'utilisateur \
+│   └── exceptions/            # Implementation des Exceptions personnalisées \
+│   └── models.dart/           # Définition des differens class Task, SimpleTask, UrgentTask \
+│   └── repository.dart/       # Définition de la repository \
+│   └── services/              # Définition des differentes actions \
 │   \
 ├── test/ \
 │   └── task_manager_test.dart         # Tests unitaires \
@@ -47,8 +40,8 @@ TaskManager/ \
 ## ⚙️ Installation
 1. Cloner le dépôt :
    ```bash
-   git clone https://github.com/alionel76/TaskManager.git
-   cd TaskManager
+   git clone https://github.com/alionel76/TaskManagerUpdated.git
+   cd TaskManagerUpdated
    ```
 2. Installer les dépendances :
     ```bash
@@ -60,14 +53,14 @@ TaskManager/ \
 ## ▶️ Utilisation
 Exécuter le programme principal :
    ```bash
-   dart run bin/task_manager.dart
+   dart run bin/main.dart
    ```
 
 ---
 
 ## 🧪 Tests
    ```bash
-   dart test test/task_manager_test.dart
+   dart test test/task_test.dart
    ```
 
 ---
